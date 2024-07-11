@@ -165,6 +165,28 @@ public:
 	}
 };
 
+class Commander
+{
+private:
+	vector<Unit*> unitGroup;
+
+public:
+	enum Command { GroupAttack, GroupMove };
+
+	void AddGroup(Unit* unit)
+	{
+		unitGroup.push_back(unit);
+	}
+
+	void RemoveGroup(Unit* unit)
+	{
+		for (vector<Unit*>::iterator it = unitGroup.begin(); it != unitGroup.end(); it++)
+		{
+
+		}
+	}
+};
+
 int main()
 {
 	Marin* marinA = new Marin("강력한 마린", 3 ,5);
