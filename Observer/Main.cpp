@@ -1,8 +1,9 @@
 #include <iostream>
 #include <vector>
+#include <string>
 using namespace std;
 
-class Unit // 추상 클래스
+class Unit // 추상 클래스 : 순수 가상 함수를 가지고 있는 클래스
 {
 private:
 	string name;
@@ -19,7 +20,7 @@ public:
 		atk = _atk;
 		hp = _hp;
 	}
-	
+
 	virtual void Move(int x, int y)
 	{
 		cout << GetName() << "은 " << x << ", " << y << " 좌표로 이동하였다" << "  ";
@@ -113,6 +114,43 @@ protected:
 	}
 };
 
+class Authority
+{
+protected:
+	vector<Unit*> unitGroup;
+
+public:
+	void AttachGroup(Unit* unit)
+	{
+		unitGroup.push_back(unit);
+	}
+
+	void DetachGroup(Unit* unit)
+	{
+		vector<Unit*>::iterator it;
+
+		for (it = unitGroup.begin(); it != unitGroup.end(); it++)
+		{
+			if (&unit == &(*it)) // 특정 지정한 유닛의 주소를 지정하고 unitGroup을 순회하며 각 유닛의 주소를 확인하고 처음 지정한 주소와 일치하면 break한다.(주소가 같다는건 내가 찾고자 하는 유닛을 의미한다)
+				break;
+		}
+
+		if (it != unitGroup.end()) // break가 실행되었으면 해당 조건이 참(찾고자 하는 유닛이 vector에 있다), 실행되지 않았다면 해당 조건은 거짓이 된다(찾고자 하는 유닛이 vector에 없다) 
+		{
+			unitGroup.erase(it);
+		}
+	}
+
+	void Notify(int xPos, int yPos) // unitGroup에 지우고자 유닛이 있는지 확인하고 지운다.
+	{
+		for (Unit* unit : unitGroup)
+		{
+			unit->SetPosX(xPos);
+			unit->SetPosY(yPos);
+		}
+	}
+};
+
 class Marin : public Unit // 실체화 : 가상클래스를 상속받아 자식클래스를 생성. 추상 클래스인 유닛을 상속 받아서 마린을 정의한다.
 {
 public:
@@ -165,48 +203,46 @@ public:
 	}
 };
 
-class Commander
+class Commander : public Authority
 {
-private:
-	vector<Unit*> unitGroup;
-
 public:
 	enum Command { GroupAttack, GroupMove };
 
-	void AddGroup(Unit* unit)
+	void Command(Command command, Unit* unit, int moveX = 0, int moveY = 0)
 	{
-		unitGroup.push_back(unit);
-	}
-
-	void RemoveGroup(Unit* unit)
-	{
-		for (vector<Unit*>::iterator it = unitGroup.begin(); it != unitGroup.end(); it++)
+		switch (command)
 		{
+		case Command::GroupAttack:
+			for (Unit* selectUnit : unitGroup)
+			{
+				selectUnit->Attack(unit);
+			}
+			break;
 
+		case Command::GroupMove:
+			for (Unit* selectUnit : unitGroup)
+			{
+				selectUnit->Move(moveX, moveY);
+			}
+			break;
 		}
 	}
 };
 
 int main()
 {
-	Marin* marinA = new Marin("강력한 마린", 3 ,5);
+	Commander commander;
+	Marin* marinA = new Marin("강력한 마린", 3, 5);
 	Marin* marinB = new Marin("타겟 마린", 2, 3);
 	Marin* marinC = new Marin("또다른 마린", 4, 8);
-	Marin* marinD = new Marin("단단한 마린", 2, 20);
-	Medic* medicA = new Medic("야근하는 메딕", 3, 10);
 
-	marinA->ShowInfo();
-	marinA->Attack(marinB);
+	Marin* target = new Marin("단단한 타겟", 0, 500);
 
-	marinA->Move(3, 3);
-	marinA->SkillA(marinA);
-	marinA->SkillB(marinC);
+	commander.AttachGroup(marinA);
+	commander.AttachGroup(marinB);
+	commander.AttachGroup(marinC);
 
-	medicA->Attack(marinD);
-	marinA->Attack(marinD);
-
-	medicA->SkillA(marinD);
-	medicA->SkillB(marinD);
+	commander.Command(Commander::GroupAttack, target);
 
 	return 0;
 }
